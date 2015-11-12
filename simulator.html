@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang='pt'>
+<head>
+	<title>Simulate Atributes Evolution</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+	<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		function rand(min, max) {
+		  return Math.random() * (max - min) + min;
+		}
+
+		jQuery(document).ready(function($){
+			var elFrom, elFromExtra, elTarget, elTargetExtra;
+
+			// Damages Calculations
+			var unarmedDamage = function(_from, _fromExtra, _target, _targetExtra) {
+				// DMG = [11 x RANDOM(1~1.125) - DEF] x STR x (Lv+STR)/256
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (11 * rand(1, 1.125) - def) * _from.str * (_from.level + _from.str) / 256;
+			}
+			var enemyDamage = function(_from, _fromExtra, _target, _targetExtra) {
+				// DMG = [ATK x RANDOM(1~1.125) - DEF] x STR x (Lv+STR)/256
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(1, 1.125) - def) * _from.str * (_from.level + _from.str) / 256;
+			}
+			var swordDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(1~1.125) - DEF] x [1 + STR x (Lv+STR)/256]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				console.log('atk', atk);
+				console.log('def', def)
+				return (atk * rand(1, 1.125) - def) * (1 + _from.str * (_from.level + _from.str) / 256);
+			}
+			var maceDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(1~1.125) - DEF] x [1 + MAG x (Lv+MAG)/256]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(1, 1.125) - def) * (1 + matk * (_from.level + _from.mstr) / 256);
+			}
+			var poleDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(1~1.125) - MDEF] x [1 + STR x (Lv+STR)/256]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(1, 1.125) - mdef) * (1 + _from.str * (_from.level + _from.str) / 256);
+			}
+			var katanaDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(1~1.125) - DEF] x [1 + STR x (Lv+MAG)/256]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(1, 1.125) - def) * (1 + _from.str * (_from.level + matk) / 256);
+			}
+			var axeDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(0~1.111) - DEF] x [1 + STR x (Lv+VIT)/128]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(0, 1.111) - def) * (1 + _from.str * (_from.level + _from.res) / 128);
+			}
+			var bowDamage = function(_from, _fromExtra, _target, _targetExtra) {
+			  // DMG = [ATK x RANDOM(1~1.125)]- DEF] x [1 + STR x (Lv+SPD)/218]
+				atk = _from.str + _fromExtra.str;
+				def = _target.res + _targetExtra.res;
+				matk = _from.mstr + _fromExtra.mstr;
+				mdef = _target.mres + _targetExtra.mres;
+				return (atk * rand(1, 1.125) - def) * (1 + _from.str * (_from.level + _from.dex) / 218);
+			}
+			var staffDamage = function(_from, _fromExtra, _target, _targetExtra) {
+				return maceDamage(_from, _fromExtra, _target, _targetExtra);
+			}
+
+			var getStats = function(base) {
+				return {
+					level: parseFloat($('#'+base+'-level').val() || 1),
+					str: parseFloat($('#'+base+'-str').val()),
+					dex: parseFloat($('#'+base+'-dex').val()),
+					res: parseFloat($('#'+base+'-res').val()),
+					mstr: parseFloat($('#'+base+'-mstr').val()),
+					mres: parseFloat($('#'+base+'-mres').val())
+				}
+			}
+
+			var calculate = function() {
+				_direction = $('#direction').val();
+				if(_direction == 'a-b') {
+					_from = getStats('from');
+					_fromExtra = getStats('from-extra');
+					_target = getStats('target');
+					_targetExtra = getStats('target-extra');
+				} else {
+					_from = getStats('target');
+					_fromExtra = getStats('target-extra');
+					_target = getStats('from');
+					_targetExtra = getStats('from-extra');
+				}
+
+				$('#damage-unarmed').val(unarmedDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-enemy').val(enemyDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-sword').val(swordDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-mace').val(maceDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-pole').val(poleDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-katana').val(katanaDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-axe').val(axeDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-bow').val(bowDamage(_from, _fromExtra, _target, _targetExtra));
+				$('#damage-staff').val(staffDamage(_from, _fromExtra, _target, _targetExtra));
+			}
+
+			$('input, select').on('change', function(){
+				calculate();
+			})
+			$('#calculate').click(function(){ calculate(); });
+			calculate();
+		})
+	</script>
+	<style type="text/css">
+		input { margin-bottom: 10px; }
+		.box {
+			float: left;
+			margin-right: 15px;
+			padding: 5px;
+			width: 250px;
+			border-right: solid 1px #ccc;
+			min-height: 500px;
+		}
+	</style>
+</head>
+<body>
+
+	<h3>
+		Simulador de dano dos atributos para calibração
+		<button class='btn btn-default btn-primary' id='calculate'>RECALCULATE</button>
+		<select id='direction' style='width: 100px; margin-left: 10px;'>
+			<option value='a-b'>A to B</option>
+			<option value='b-a'>B to A</option>
+		</select>
+	</h3>
+	<hr />
+	<br />
+	<div class="box">
+		<b>A</b>
+		<hr />
+		<label>LEVEL</label>
+		<input type="number" class="form-control calculable" id="from-level" value="1" />
+		<label>STR</label>
+		<input type="number" class="form-control calculable" id="from-str" value="7" />
+		<label>DEX</label>
+		<input type="number" class="form-control calculable" id="from-dex" value="7" />
+		<label>RES</label>
+		<input type="number" class="form-control calculable" id="from-res" value="7" />
+		<label>MSTR</label>
+		<input type="number" class="form-control calculable" id="from-mstr" value="5" />
+		<label>MRES</label>
+		<input type="number" class="form-control calculable" id="from-mres" value="5" />
+	</div>
+	<div class="box">
+		<b>A EXTRA</b>
+		<hr />
+		<label>STR</label>
+		<input type="number" class="form-control calculable" id="from-extra-str" value="3" />
+		<label>DEX</label>
+		<input type="number" class="form-control calculable" id="from-extra-dex" value="3" />
+		<label>RES</label>
+		<input type="number" class="form-control calculable" id="from-extra-res" value="3" />
+		<label>MSTR</label>
+		<input type="number" class="form-control calculable" id="from-extra-mstr" value="3" />
+		<label>MRES</label>
+		<input type="number" class="form-control calculable" id="from-extra-mres" value="3" />
+	</div>
+	<div class="box">
+		<b>B</b>
+		<hr />
+		<label>STR</label>
+		<input type="number" class="form-control calculable" id="target-str" value="5" />
+		<label>DEX</label>
+		<input type="number" class="form-control calculable" id="target-dex" value="5" />
+		<label>RES</label>
+		<input type="number" class="form-control calculable" id="target-res" value="5" />
+		<label>MSTR</label>
+		<input type="number" class="form-control calculable" id="target-mstr" value="5" />
+		<label>MRES</label>
+		<input type="number" class="form-control calculable" id="target-mres" value="5" />
+	</div>
+	<div class="box">
+		<b>B EXTRA</b>
+		<hr />
+		<label>STR</label>
+		<input type="number" class="form-control calculable" id="target-extra-str" value="2" />
+		<label>DEX</label>
+		<input type="number" class="form-control calculable" id="target-extra-dex" value="2" />
+		<label>RES</label>
+		<input type="number" class="form-control calculable" id="target-extra-res" value="2" />
+		<label>MSTR</label>
+		<input type="number" class="form-control calculable" id="target-extra-mstr" value="2" />
+		<label>MRES</label>
+		<input type="number" class="form-control calculable" id="target-extra-mres" value="2" />
+	</div>
+	<div class="box">
+		<b>DAMAGE RESULTS</b>
+		<hr />
+		<label>UNARMED</label>
+		<input type="number" class="form-control calculable" id="damage-unarmed" value="0" />
+		<label>SWORD</label>
+		<input type="number" class="form-control calculable" id="damage-sword" value="0" />
+		<label>MACE</label>
+		<input type="number" class="form-control calculable" id="damage-mace" value="0" />
+		<label>POLE</label>
+		<input type="number" class="form-control calculable" id="damage-pole" value="0" />
+		<label>KATANA</label>
+		<input type="number" class="form-control calculable" id="damage-katana" value="0" />
+		<label>AXE</label>
+		<input type="number" class="form-control calculable" id="damage-axe" value="0" />
+		<label>BOW</label>
+		<input type="number" class="form-control calculable" id="damage-bow" value="0" />
+		<label>STAFF</label>
+		<input type="number" class="form-control calculable" id="damage-staff" value="0" />
+		<label>ENEMY</label>
+		<input type="number" class="form-control calculable" id="damage-enemy" value="0" />
+	</div>
+
+</body>
+</html>
